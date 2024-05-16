@@ -17,7 +17,9 @@ jobs:
             const { repo, payload, github } = context;
             
             async function run() {
-              const response = await github.request('GET /repos/{owner}/{repo}/issues', {
+              const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
+              
+              const response = await octokit.request('GET /repos/{owner}/{repo}/issues', {
                 owner: repo.owner,
                 repo: repo.repo
               });
@@ -28,7 +30,7 @@ jobs:
               for (const issue of issues) {
                 if (new Date(issue.updated_at) < threshold && issue.state === 'open') {
                   // Unassign the assignees
-                  await github.request('PATCH /repos/{owner}/{repo}/issues/{issue_number}', {
+                  await octokit.request('PATCH /repos/{owner}/{repo}/issues/{issue_number}', {
                     owner: repo.owner,
                     repo: repo.repo,
                     issue_number: issue.number,
@@ -40,5 +42,6 @@ jobs:
             }
 
             run();
+
 
 

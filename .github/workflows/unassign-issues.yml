@@ -11,15 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Follow up and unassign stale assignees
-        id: followup_and_unassign
         uses: actions/github-script@v4
         with:
           script: |
-            const { Octokit } = require("@octokit/core");
-            const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+            const { context, github } = require('@actions/github');
 
             async function run() {
-              const response = await octokit.request('GET /repos/{owner}/{repo}/issues', {
+              const response = await github.request('GET /repos/{owner}/{repo}/issues', {
                 owner: context.repo.owner,
                 repo: context.repo.repo
               });
@@ -30,7 +28,7 @@ jobs:
               for (const issue of issues) {
                 if (new Date(issue.updated_at) < threshold && issue.state === 'open') {
                   // Unassign the assignees
-                  await octokit.request('PATCH /repos/{owner}/{repo}/issues/{issue_number}', {
+                  await github.request('PATCH /repos/{owner}/{repo}/issues/{issue_number}', {
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     issue_number: issue.number,

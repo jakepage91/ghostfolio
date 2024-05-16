@@ -14,12 +14,12 @@ jobs:
         uses: actions/github-script@v4
         with:
           script: |
-            const { context, github } = require('@actions/github');
-
+            const { repo, payload, github } = context;
+            
             async function run() {
               const response = await github.request('GET /repos/{owner}/{repo}/issues', {
-                owner: context.repo.owner,
-                repo: context.repo.repo
+                owner: repo.owner,
+                repo: repo.repo
               });
 
               const issues = response.data;
@@ -29,8 +29,8 @@ jobs:
                 if (new Date(issue.updated_at) < threshold && issue.state === 'open') {
                   // Unassign the assignees
                   await github.request('PATCH /repos/{owner}/{repo}/issues/{issue_number}', {
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
+                    owner: repo.owner,
+                    repo: repo.repo,
                     issue_number: issue.number,
                     assignees: []
                   });
@@ -40,4 +40,5 @@ jobs:
             }
 
             run();
+
 

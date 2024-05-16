@@ -1,0 +1,45 @@
+name: Follow-up and Unassign Stale Assignees
+
+on:
+  schedule:
+    - cron: '*/1 * * * *'  # Run the workflow every minute
+  issue_comment:
+    types: [created]
+
+jobs:
+  followup_and_unassign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Follow up and unassign stale assignees
+        id: followup_and_unassign
+        uses: actions/github-script@v4
+        with:
+          script: |
+            const { Octokit } = require("@octokit/core");
+            const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+
+            async function run() {
+              const response = await octokit.request('GET /repos/{owner}/{repo}/issues', {
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              });
+
+              const issues = response.data;
+              const threshold = new Date(new Date().getTime() - (2 * 60 * 1000)); // 2 minutes
+
+              for (const issue of issues) {
+                if (new Date(issue.updated_at) < threshold && issue.state === 'open') {
+                  // Unassign the assignees
+                  await octokit.request('PATCH /repos/{owner}/{repo}/issues/{issue_number}', {
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issue.number,
+                    assignees: []
+                  });
+                  console.log(`Unassigned assignees from issue #${issue.number}`);
+                }
+              }
+            }
+
+            run();
+
